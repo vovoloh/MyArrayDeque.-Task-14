@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -10,7 +10,7 @@ namespace Task14
         private int head;
         private int tail;
         private int count;
-        
+
         public MyArrayDeque()
         {
             elements = new T[16];
@@ -18,12 +18,12 @@ namespace Task14
             tail = 0;
             count = 0;
         }
-        
+
         public MyArrayDeque(T[] a)
         {
             if (a == null)
                 throw new ArgumentNullException(nameof(a));
-            
+
             int capacity = Math.Max(a.Length, 16);
             elements = new T[capacity];
             Array.Copy(a, elements, a.Length);
@@ -31,218 +31,229 @@ namespace Task14
             tail = a.Length;
             count = a.Length;
         }
-        
+
         public MyArrayDeque(int numElements)
         {
             if (numElements < 0)
                 throw new ArgumentOutOfRangeException(nameof(numElements), "Емкость не может быть отрицательной");
-            
-            int capacity = Math.Max(numElements, 16);
+
+            int capacity = Math.Max(numElements, 4);
             elements = new T[capacity];
             head = 0;
             tail = 0;
             count = 0;
         }
-        
-        public void Add(T e)
-        {
-            AddLast(e);
-        }
-        
+
+        public void Add(T e) => AddLast(e);
+
         public void AddAll(T[] a)
         {
             if (a == null)
                 throw new ArgumentNullException(nameof(a));
-            
+
             foreach (var item in a)
-            {
                 AddLast(item);
-            }
         }
-        
+
         public void Clear()
         {
-            if (head < tail)
-            {
-                Array.Clear(elements, head, count);
-            }
-            else
-            {
-                Array.Clear(elements, head, elements.Length - head);
-                Array.Clear(elements, 0, tail);
-            }
-            
+            Array.Clear(elements, 0, elements.Length);
             head = 0;
             tail = 0;
             count = 0;
         }
-        
+
         public bool Contains(object o)
         {
-            if (o == null)
+            for (int i = 0; i < count; i++)
             {
-                if (head < tail)
+                T element = GetElementAt(i);
+                if (o == null)
                 {
-                    for (int i = head; i < tail; i++)
-                        if (elements[i] == null)
-                            return true;
+                    if (element == null) return true;
                 }
-                else
+                else if (o.Equals(element))
                 {
-                    for (int i = head; i < elements.Length; i++)
-                        if (elements[i] == null)
-                            return true;
-                    for (int i = 0; i < tail; i++)
-                        if (elements[i] == null)
-                            return true;
-                }
-                return false;
-            }
-            
-            if (o is T item)
-            {
-                if (head < tail)
-                {
-                    for (int i = head; i < tail; i++)
-                        if (item.Equals(elements[i]))
-                            return true;
-                }
-                else
-                {
-                    for (int i = head; i < elements.Length; i++)
-                        if (item.Equals(elements[i]))
-                            return true;
-                    for (int i = 0; i < tail; i++)
-                        if (item.Equals(elements[i]))
-                            return true;
+                    return true;
                 }
             }
-            
             return false;
         }
-        
+
         public bool ContainsAll(T[] a)
         {
             if (a == null)
                 throw new ArgumentNullException(nameof(a));
-            
+
             foreach (var item in a)
-            {
                 if (!Contains(item))
                     return false;
-            }
             return true;
         }
-        
-        public bool IsEmpty()
-        {
-            return count == 0;
-        }
-        
-        public bool Remove(object o)
-        {
-            return RemoveFirstOccurrence(o);
-        }
-        
+
+        public bool IsEmpty() => count == 0;
+
+        public bool Remove(object o) => RemoveFirstOccurrence(o);
+
         public void RemoveAll(T[] a)
         {
             if (a == null)
                 throw new ArgumentNullException(nameof(a));
-            
+
             foreach (var item in a)
-            {
                 while (Remove(item)) { }
-            }
         }
-        
+
         public void RetainAll(T[] a)
         {
             if (a == null)
                 throw new ArgumentNullException(nameof(a));
-            
+
             var retained = new List<T>();
-            
             for (int i = 0; i < count; i++)
             {
                 T element = GetElementAt(i);
                 if (Array.IndexOf(a, element) != -1)
-                {
                     retained.Add(element);
-                }
             }
-            
+
             Clear();
             foreach (var item in retained)
-            {
                 AddLast(item);
-            }
         }
-        
-        public int Size()
-        {
-            return count;
-        }
-        
+
+        public int Size() => count;
+
         public T[] ToArray()
         {
             T[] result = new T[count];
-            if (count == 0)
-                return result;
-            
-            if (head < tail)
-            {
-                Array.Copy(elements, head, result, 0, count);
-            }
-            else
-            {
-                int firstPart = elements.Length - head;
-                Array.Copy(elements, head, result, 0, firstPart);
-                Array.Copy(elements, 0, result, firstPart, tail);
-            }
-            
+            for (int i = 0; i < count; i++)
+                result[i] = GetElementAt(i);
             return result;
         }
-        
+
         public T[] ToArray(T[] a)
         {
             if (a == null)
                 return ToArray();
-            
+
             if (a.Length < count)
-            {
                 a = new T[count];
-            }
-            
-            if (count == 0)
-                return a;
-            
-            if (head < tail)
+
+            for (int i = 0; i < count; i++)
+                a[i] = GetElementAt(i);
+
+            if (a.Length > count)
+                a[count] = default(T);
+
+            return a;
+        }
+
+        public void AddFirst(T obj)
+        {
+            EnsureCapacity(count + 1);
+            if (IsEmpty())
             {
-                Array.Copy(elements, head, a, 0, count);
+                elements[head] = obj;
+                tail = (tail + 1) % elements.Length;
             }
             else
             {
-                int firstPart = elements.Length - head;
-                Array.Copy(elements, head, a, 0, firstPart);
-                Array.Copy(elements, 0, a, firstPart, tail);
+                head = (head - 1 + elements.Length) % elements.Length;
+                elements[head] = obj;
             }
-            
-            if (a.Length > count)
-            {
-                a[count] = default(T);
-            }
-            
-            return a;
+
+            count++;
         }
-        
-        public T Element()
+
+        public void AddLast(T obj)
+        {
+            EnsureCapacity(count + 1);
+            elements[tail] = obj;
+            tail = (tail + 1) % elements.Length;
+            count++;
+        }
+
+        public T RemoveFirst()
         {
             if (IsEmpty())
                 throw new InvalidOperationException("Дек пуст");
-            
+
+            T item = elements[head];
+            elements[head] = default(T);
+            head = (head + 1) % elements.Length;
+            count--;
+            if (count == 0)
+            {
+                head = 0;
+                tail = 0;
+            }
+
+            return item;
+        }
+
+        public T RemoveLast()
+        {
+            if (IsEmpty())
+                throw new InvalidOperationException("Дек пуст");
+
+            tail = (tail - 1 + elements.Length) % elements.Length;
+            T item = elements[tail];
+            elements[tail] = default(T);
+            count--;
+            if (count == 0)
+            {
+                head = 0;
+                tail = 0;
+            }
+
+            return item;
+        }
+
+        public T PollFirst()
+        {
+            if (IsEmpty())
+                return default(T);
+
+            return RemoveFirst();
+        }
+
+        public T PollLast()
+        {
+            if (IsEmpty())
+                return default(T);
+
+            return RemoveLast();
+        }
+
+        public T GetFirst()
+        {
+            if (IsEmpty())
+                throw new InvalidOperationException("Дек пуст");
             return elements[head];
         }
-        
+
+        public T GetLast()
+        {
+            if (IsEmpty())
+                throw new InvalidOperationException("Дек пуст");
+            return elements[(tail - 1 + elements.Length) % elements.Length];
+        }
+
+        public T Peek()
+        {
+            if (IsEmpty())
+                return default(T);
+            return elements[head];
+        }
+        public T PeekFirst() => Peek();
+        public T PeekLast()
+        {
+            if (IsEmpty())
+                return default(T);
+            return elements[(tail - 1 + elements.Length) % elements.Length];
+        }
+        public T Element() => GetFirst();
         public bool Offer(T obj)
         {
             try
@@ -255,55 +266,7 @@ namespace Task14
                 return false;
             }
         }
-        
-        public T Peek()
-        {
-            if (IsEmpty())
-                return default(T);
-            
-            return elements[head];
-        }
-        
-        public T Poll()
-        {
-            if (IsEmpty())
-                return default(T);
-            
-            return PollFirst();
-        }
-        
-        public void AddFirst(T obj)
-        {
-            EnsureCapacity(count + 1);
-            head = (head - 1 + elements.Length) % elements.Length;
-            elements[head] = obj;
-            count++;
-        }
-        
-        public void AddLast(T obj)
-        {
-            EnsureCapacity(count + 1);
-            elements[tail] = obj;
-            tail = (tail + 1) % elements.Length;
-            count++;
-        }
-        
-        public T GetFirst()
-        {
-            if (IsEmpty())
-                throw new InvalidOperationException("Дек пуст");
-            
-            return elements[head];
-        }
-        
-        public T GetLast()
-        {
-            if (IsEmpty())
-                throw new InvalidOperationException("Дек пуст");
-            
-            return elements[(tail - 1 + elements.Length) % elements.Length];
-        }
-        
+
         public bool OfferFirst(T obj)
         {
             try
@@ -316,362 +279,125 @@ namespace Task14
                 return false;
             }
         }
-        
-        public bool OfferLast(T obj)
-        {
-            return Offer(obj);
-        }
-        
-        public T Pop()
-        {
-            if (IsEmpty())
-                throw new InvalidOperationException("Дек пуст");
-            
-            return RemoveFirst();
-        }
-        
-        public void Push(T obj)
-        {
-            AddFirst(obj);
-        }
-        
-        public T PeekFirst()
-        {
-            return Peek();
-        }
-        
-        public T PeekLast()
-        {
-            if (IsEmpty())
-                return default(T);
-            
-            return elements[(tail - 1 + elements.Length) % elements.Length];
-        }
-        
-        public T PollFirst()
-        {
-            if (IsEmpty())
-                return default(T);
-            
-            T item = elements[head];
-            elements[head] = default(T);
-            head = (head + 1) % elements.Length;
-            count--;
-            return item;
-        }
-        
-        public T PollLast()
-        {
-            if (IsEmpty())
-                return default(T);
-            
-            tail = (tail - 1 + elements.Length) % elements.Length;
-            T item = elements[tail];
-            elements[tail] = default(T);
-            count--;
-            return item;
-        }
-        
-        public T RemoveLast()
-        {
-            if (IsEmpty())
-                throw new InvalidOperationException("Дек пуст");
-            
-            return PollLast();
-        }
-        
-        public T RemoveFirst()
-        {
-            if (IsEmpty())
-                throw new InvalidOperationException("Дек пуст");
-            
-            return PollFirst();
-        }
-        
-        public bool RemoveLastOccurrence(object obj)
-        {
-            if (count == 0)
-                return false;
-            
-            int foundIndex = -1;
-            
-            if (head < tail)
-            {
-                for (int i = tail - 1; i >= head; i--)
-                {
-                    if (IsEqual(elements[i], obj))
-                    {
-                        foundIndex = i;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                for (int i = tail - 1; i >= 0; i--)
-                {
-                    if (IsEqual(elements[i], obj))
-                    {
-                        foundIndex = i;
-                        break;
-                    }
-                }
-                
-                if (foundIndex == -1)
-                {
-                    for (int i = elements.Length - 1; i >= head; i--)
-                    {
-                        if (IsEqual(elements[i], obj))
-                        {
-                            foundIndex = i;
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            if (foundIndex == -1)
-                return false;
-            
-            RemoveAt(foundIndex);
-            return true;
-        }
-        
+
+        public bool OfferLast(T obj) => Offer(obj);
+
+        public T Pop() => RemoveFirst();
+
+        public void Push(T obj) => AddFirst(obj);
+
         public bool RemoveFirstOccurrence(object obj)
         {
-            if (count == 0)
-                return false;
-            
-            int foundIndex = -1;
-            
-            if (head < tail)
+            if (count == 0) return false;
+
+            for (int i = 0; i < count; i++)
             {
-                for (int i = head; i < tail; i++)
+                T element = GetElementAt(i);
+                if (IsEqual(element, obj))
                 {
-                    if (IsEqual(elements[i], obj))
-                    {
-                        foundIndex = i;
-                        break;
-                    }
+                    RemoveAt(i);
+                    return true;
                 }
             }
-            else
-            {
-                for (int i = head; i < elements.Length; i++)
-                {
-                    if (IsEqual(elements[i], obj))
-                    {
-                        foundIndex = i;
-                        break;
-                    }
-                }
-                
-                if (foundIndex == -1)
-                {
-                    for (int i = 0; i < tail; i++)
-                    {
-                        if (IsEqual(elements[i], obj))
-                        {
-                            foundIndex = i;
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            if (foundIndex == -1)
-                return false;
-            
-            RemoveAt(foundIndex);
-            return true;
+            return false;
         }
-        
+
+        public bool RemoveLastOccurrence(object obj)
+        {
+            if (count == 0) return false;
+
+            for (int i = count - 1; i >= 0; i--)
+            {
+                T element = GetElementAt(i);
+                if (IsEqual(element, obj))
+                {
+                    RemoveAt(i);
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private void EnsureCapacity(int minCapacity)
         {
             if (minCapacity > elements.Length)
             {
-                int newCapacity = elements.Length * 2;
-                if (newCapacity < minCapacity)
-                    newCapacity = minCapacity;
-                
+                int newCapacity = Math.Max(elements.Length * 2, minCapacity);
                 T[] newArray = new T[newCapacity];
-                
-                if (head < tail)
-                {
-                    Array.Copy(elements, head, newArray, 0, count);
-                }
-                else
-                {
-                    int firstPart = elements.Length - head;
-                    Array.Copy(elements, head, newArray, 0, firstPart);
-                    Array.Copy(elements, 0, newArray, firstPart, tail);
-                }
-                
+                for (int i = 0; i < count; i++)
+                    newArray[i] = GetElementAt(i);
+
                 elements = newArray;
                 head = 0;
                 tail = count;
             }
         }
-        
+
         private T GetElementAt(int index)
         {
             if (index < 0 || index >= count)
                 throw new ArgumentOutOfRangeException(nameof(index));
-            
             return elements[(head + index) % elements.Length];
         }
-        
+
         private void RemoveAt(int index)
         {
-            if (count == 0)
-                return;
-            
-            if (count == 1)
-            {
-                Clear();
-                return;
-            }
-            
-            // Определяем, в какой части массива находится элемент
-            int actualIndex;
-            if (head <= index && index < (head < tail ? tail : elements.Length))
-            {
-                // Элемент в первой части
-                actualIndex = index;
-            }
-            else if (head >= tail && index < tail)
-            {
-                // Элемент во второй части (когда head > tail)
-                actualIndex = index;
-            }
-            else
-            {
+            if (index < 0 || index >= count)
                 throw new ArgumentOutOfRangeException(nameof(index));
-            }
-            
-            // Если удаляется первый элемент
-            if (actualIndex == head)
+            if (index == 0)
             {
-                elements[head] = default(T);
-                head = (head + 1) % elements.Length;
-                count--;
+                RemoveFirst();
                 return;
             }
-            
-            // Если удаляется последний элемент
-            int lastIndex = (tail - 1 + elements.Length) % elements.Length;
-            if (actualIndex == lastIndex)
+
+            if (index == count - 1)
             {
-                elements[lastIndex] = default(T);
-                tail = lastIndex;
-                count--;
+                RemoveLast();
                 return;
             }
-            
-            // Удаление из середины - сдвигаем элементы
-            if (head < tail)
+            for (int i = index; i < count - 1; i++)
             {
-                // Линейный массив
-                Array.Copy(elements, actualIndex + 1, elements, actualIndex, tail - actualIndex - 1);
-                tail--;
-                elements[tail] = default(T);
+                int currentIdx = (head + i) % elements.Length;
+                int nextIdx = (head + i + 1) % elements.Length;
+                elements[currentIdx] = elements[nextIdx];
             }
-            else if (actualIndex >= head)
-            {
-                // Элемент в первой части (от head до конца массива)
-                Array.Copy(elements, actualIndex + 1, elements, actualIndex, elements.Length - actualIndex - 1);
-                
-                // Переносим последний элемент из второй части
-                if (tail > 0)
-                {
-                    elements[elements.Length - 1] = elements[0];
-                    Array.Copy(elements, 1, elements, 0, tail - 1);
-                    tail--;
-                }
-                else
-                {
-                    tail = elements.Length - 1;
-                }
-            }
-            else
-            {
-                // Элемент во второй части (от 0 до tail)
-                Array.Copy(elements, actualIndex + 1, elements, actualIndex, tail - actualIndex - 1);
-                tail--;
-            }
-            
+            tail = (tail - 1 + elements.Length) % elements.Length;
+            elements[tail] = default(T);
             count--;
         }
-        
         private bool IsEqual(T element, object obj)
         {
             if (obj == null)
                 return element == null;
-            
+
             if (obj is T other)
-                return element.Equals(other);
-            
+                return element != null && element.Equals(other);
+
             return false;
         }
-        
         public IEnumerator<T> GetEnumerator()
         {
-            if (head < tail)
-            {
-                for (int i = head; i < tail; i++)
-                    yield return elements[i];
-            }
-            else
-            {
-                for (int i = head; i < elements.Length; i++)
-                    yield return elements[i];
-                for (int i = 0; i < tail; i++)
-                    yield return elements[i];
-            }
+            for (int i = 0; i < count; i++)
+                yield return GetElementAt(i);
         }
-        
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-        
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
         public override string ToString()
         {
             if (IsEmpty())
                 return "Дек [пуст]";
-            
+
             string result = "[";
-            bool first = true;
-            
-            if (head < tail)
+            for (int i = 0; i < count; i++)
             {
-                for (int i = head; i < tail; i++)
-                {
-                    if (!first) result += ", ";
-                    result += elements[i];
-                    first = false;
-                }
+                if (i > 0) result += ", ";
+                result += GetElementAt(i);
             }
-            else
-            {
-                for (int i = head; i < elements.Length; i++)
-                {
-                    if (!first) result += ", ";
-                    result += elements[i];
-                    first = false;
-                }
-                for (int i = 0; i < tail; i++)
-                {
-                    if (!first) result += ", ";
-                    result += elements[i];
-                    first = false;
-                }
-            }
-            
             result += "]";
             return result;
         }
-    } 
+    }
     class Program
     {
         static void Main(string[] args)
@@ -680,6 +406,8 @@ namespace Task14
             deque1.Add(1);
             deque1.Add(2);
             deque1.Add(3);
+            Console.WriteLine($"Дек: {deque1}");
+            deque1.AddFirst(23);
             Console.WriteLine($"Дек: {deque1}");
 
             Console.WriteLine($"Удален первый: {deque1.RemoveFirst()}");
